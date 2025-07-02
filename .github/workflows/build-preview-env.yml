@@ -35,10 +35,15 @@ jobs:
     runs-on: arc-runner-set-eks
     env:
       VERSION: 0.${{ github.run_number }}
-      AWS_REGISTRY: ${{ '924947995844.dkr.ecr.eu-west-1.amazonaws.com/preview-environment' }}
+      AWS_REGISTRY: ${{ '924947995844.dkr.ecr.eu-west-1.amazonaws.com/mapsunified-dev-repository' }}
     steps:
-      - name: Checkout code
+      - name: Checkout specific branch of another repository
         uses: actions/checkout@v3
+        with:
+          repository: inventanalytics/mapsunified # Replace with the actual owner/repo name
+          ref: github.event.inputs.mapsunified_pr       # Specify the branch name here
+          path: ./mapsunified   # Directory to clone the other repo into
+          # token: ${{ secrets.YOUR_PAT }} # Required for private repositories
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
