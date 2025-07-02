@@ -19,7 +19,7 @@ on:
 jobs:
   publish-to-maps-database:
     if: ${{ github.event.inputs.mapsdatabase_pr != '' }}
-    runs-on: arc-runner-set-eks
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -32,7 +32,7 @@ jobs:
 
   build-image-and-push:
     if: ${{ github.event.inputs.mapsunified_pr != '' }}
-    runs-on: arc-runner-set-eks
+    runs-on: ubuntu-latest
     env:
       VERSION: 0.${{ github.run_number }}
       AWS_REGISTRY: ${{ '924947995844.dkr.ecr.eu-west-1.amazonaws.com/mapsunified-dev-repository' }}
@@ -69,7 +69,7 @@ jobs:
           echo "Pushing image..."
 
   create-and-deploy-lambda:
-    runs-on: arc-runner-set-eks
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
