@@ -38,7 +38,7 @@ jobs:
       AWS_REGISTRY: ${{ '924947995844.dkr.ecr.eu-west-1.amazonaws.com/preview-environment' }}
     steps:
       - name: Checkout code
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -68,7 +68,7 @@ jobs:
 
     steps:
       - name: Checkout code
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
