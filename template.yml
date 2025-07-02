@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda function to run ECS task
+
+Resources:
+  MapsRunnerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: maps-runner
+      Handler: maps-runner.lambda_handler
+      Runtime: python3.10
+      MemorySize: 128
+      Timeout: 900
+      Role: arn:aws:iam::924947995844:role/YOUR_LAMBDA_ROLE # needed role
