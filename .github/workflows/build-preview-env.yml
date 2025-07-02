@@ -43,7 +43,7 @@ jobs:
           repository: inventanalytics/mapsunified # Replace with the actual owner/repo name
           ref: github.event.inputs.mapsunified_pr       # Specify the branch name here
           path: ./mapsunified   # Directory to clone the other repo into
-          # token: ${{ secrets.YOUR_PAT }} # Required for private repositories
+          token: ${{ secrets.TOKEN }} # Required for private repositories
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
