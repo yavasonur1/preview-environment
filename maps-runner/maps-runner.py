@@ -6,7 +6,7 @@ def lambda_handler(event, context):
     STARTED_BY = event.get('started_by', 'default-user')
     RUN_ID = event.get('run_id', '')
     CUSTOMER_NAME = event.get('customer_name', '')
-    DB_ENV_TYPE = event.get('db_env_type', 'test')
+    DB_ENV_TYPE = event.get('db_env_type', 'preview')
 
     CONTAINER = 'mapsunified-preview'
     TASK_DEF = 'mapsunified-preview'
