@@ -58,14 +58,14 @@ jobs:
       - name: Build Docker Image for AWS
         shell: bash
         run: |
-          # docker build -t $AWS_REGISTRY:$VERSION -t $AWS_REGISTRY:latest .
+          docker build -t $AWS_REGISTRY:$VERSION -t $AWS_REGISTRY:latest .
           echo "Building image..."
 
       - name: Push Docker Image to AWS ECR
         shell: bash
         run: |
-          # docker push $AWS_REGISTRY:$VERSION
-          # docker push $AWS_REGISTRY:latest
+          docker push $AWS_REGISTRY:$VERSION
+          docker push $AWS_REGISTRY:latest
           echo "Pushing image..."
 
   create-and-deploy-lambda:
