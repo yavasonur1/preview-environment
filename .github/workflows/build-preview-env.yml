@@ -33,7 +33,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "Downloading backup file..."
-            aws s3 cp s3://preview-environment-db-backups/PreviewEnvironmentDB.bak /var/opt/mssql/data/PreviewEnvironmentDB.bak
+            aws s3 cp s3://acme-preview-environment-db-backups/PreviewEnvironmentDB.bak /var/opt/mssql/data/PreviewEnvironmentDB.bak
 
             echo "SQL Server starting the restore..."
             /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -Q "RESTORE DATABASE [PreviewEnvironmentDB] FROM DISK = '/var/opt/mssql/data/PreviewEnvironmentDB.bak' WITH REPLACE"
