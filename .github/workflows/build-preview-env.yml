@@ -25,10 +25,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Publish to MapsDatabase
-        if: ${{ github.event.inputs.mapsdatabase_pr != '' }}
-        run: |
-          echo "Publishing with branch: ${{ github.event.inputs.mapsdatabase_pr }}"
+      - name: SSH into EC2 and restore DB
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Downloading backup file..."
+            aws s3 cp s3://preview-environment-db-backups/PreviewEnvironmentDB.bak /var/opt/mssql/data/PreviewEnvironmentDB.bak
+
+            echo "SQL Server starting the restore..."
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -Q "RESTORE DATABASE [PreviewEnvironmentDB] FROM DISK = '/var/opt/mssql/data/PreviewEnvironmentDB.bak' WITH REPLACE"
 
   build-image-and-push:
     if: ${{ github.event.inputs.mapsunified_pr != '' }}
