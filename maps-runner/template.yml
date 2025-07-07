@@ -6,7 +6,7 @@ Resources:
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: hello_world.app.lambda_handler
+      Handler: app.lambda_handler
       FunctionName: Preview-Environment-Hello-World
       Runtime: python3.10
       CodeUri: .
