@@ -106,5 +106,10 @@ jobs:
         run: sam build --template-file maps-runner/template.yml
 
       - name: Deploy SAM application
-        run: | 
-          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name maps-runner-stack --capabilities CAPABILITY_IAM
+        run: |
+          sam deploy \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name maps-runner-stack \
+            --capabilities CAPABILITY_IAM \
+            --s3-bucket acme-preview-lambda-buckets
