@@ -13,6 +13,7 @@ Resources:
       Timeout: 10
       Policies:
         - AWSLambdaBasicExecutionRole
+      Role: arn:aws:iam::924947995844:role/AcmePreviewEnvironmentEC2
 
 Outputs:
   HelloWorldFunction:
