@@ -69,6 +69,7 @@ jobs:
             aws secretsmanager create-secret \
               --name preview-env-user-secret \
               --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}" \
+              --region eu-west-1 \
               || aws secretsmanager put-secret-value \
               --secret-id preview-env-user-secret \
               --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}"
