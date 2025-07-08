@@ -133,7 +133,7 @@ jobs:
         run: |
           aws lambda invoke \
             --function-name Preview-Environment-Hello-World \
-            --payload '{"name": "Onur"}' \
+            --payload '{\"name\": \"Onur\"}' \
             response.json
 
       - name: Show Lambda response
