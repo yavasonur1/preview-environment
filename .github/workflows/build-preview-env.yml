@@ -144,6 +144,7 @@ jobs:
           aws lambda invoke \
             --function-name Preview-Environment-Hello-World \
             --payload file://payload.json \
+            --cli-binary-format raw-in-base64-out \
             response.json
 
       - name: Show Lambda response
