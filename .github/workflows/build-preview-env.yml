@@ -129,11 +129,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
 
+      - name: Create payload file
+        run: |
+          echo '{ "name": "Onur" }' > payload.json
+      
       - name: Invoke Lambda Function
         run: |
           aws lambda invoke \
             --function-name Preview-Environment-Hello-World \
-            --payload "$(echo '{ "name": "Onur" }')" \
+            --payload file://payload.json \
             response.json
 
       - name: Show Lambda response
