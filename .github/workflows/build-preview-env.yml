@@ -38,6 +38,41 @@ jobs:
             echo "SQL Server starting the restore..."
             /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -Q "RESTORE DATABASE [PreviewEnvironmentDB] FROM DISK = '/var/opt/mssql/data/PreviewEnvironmentDB.bak' WITH REPLACE"
 
+      - name: Check DB online
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Checking if DB is online..."
+            until /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -Q "SELECT state_desc FROM sys.databases WHERE name = 'PreviewEnvironmentDB'" | grep -q ONLINE; do
+              echo "Waiting 5s..."
+              sleep 5
+            done
+            echo "✅ DB is ONLINE!"
+
+      - name: Create DB user & store secret
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Generating password..."
+            PASSWORD=$(openssl rand -base64 20)
+
+            echo "Creating DB user..."
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -d PreviewEnvironmentDB -Q "CREATE LOGIN [preview_env_user] WITH PASSWORD = '${PASSWORD}'; CREATE USER [preview_env_user] FOR LOGIN [preview_env_user]; ALTER ROLE db_owner ADD MEMBER [preview_env_user];"
+
+            echo "Saving to Secrets Manager..."
+            aws secretsmanager create-secret \
+              --name preview-env-user-secret \
+              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}" \
+              || aws secretsmanager put-secret-value \
+              --secret-id preview-env-user-secret \
+              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}"
+
   build-image-and-push:
     if: ${{ github.event.inputs.mapsunified_pr != '' }}
     runs-on: ubuntu-latest
