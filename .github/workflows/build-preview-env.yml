@@ -129,6 +129,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
 
+      - name: Check AWS CLI version
+        run: aws --version
+      
       - name: Create payload file
         run: |
           echo '{ "name": "Onur" }' > payload.json
