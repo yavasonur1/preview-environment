@@ -133,6 +133,9 @@ jobs:
         run: |
           echo '{ "name": "Onur" }' > payload.json
       
+      - name: Show payload file content
+        run: cat payload.json
+      
       - name: Invoke Lambda Function
         run: |
           aws lambda invoke \
