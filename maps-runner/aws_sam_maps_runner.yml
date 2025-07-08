@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Maps Runner Lambda
+
+Resources:
+  MapsRunnerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: maps-runner
+      Handler: maps-runner.lambda_handler
+      Runtime: python3.10
+      CodeUri: .
+      MemorySize: 128
+      Timeout: 300  # max 5 dk çalışabilir
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Role: arn:aws:iam::924947995844:role/AcmePreviewEnvironmentEC2
+      Events:
+        FiveMinuteTrigger:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+
+Outputs:
+  MapsRunnerFunction:
+    Description: "Maps Runner Lambda ARN"
+    Value: !GetAtt MapsRunnerFunction.Arn
