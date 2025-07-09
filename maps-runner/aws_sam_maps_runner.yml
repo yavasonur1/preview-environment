@@ -13,7 +13,7 @@ Resources:
       MemorySize: 128
       Timeout: 300
       Layers:
-        - arn:aws:lambda:eu-west-1:924947995844:layer:pyodbc-layer:3
+        - arn:aws:lambda:eu-west-1:924947995844:layer:pyodbc-layer:4
       Policies:
         - AWSLambdaBasicExecutionRole
       Role: arn:aws:iam::924947995844:role/AcmePreviewEnvironmentEC2
