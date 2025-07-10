@@ -99,7 +99,7 @@ jobs:
       - name: Upsert secret
         run: |
           echo "Using password: ${{ steps.pwgen.outputs.password }}"
-          PASSWORD=${{ steps.pwgen.outputs.password }}
+          PASSWORD="${{ steps.pwgen.outputs.password }}"
           if aws secretsmanager describe-secret --secret-id preview-env-user-secret --region eu-west-1; then
             echo "Secret exists, updating.."
             aws secretsmanager put-secret-value \
