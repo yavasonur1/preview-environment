@@ -60,6 +60,7 @@ jobs:
             echo "✅ DB is ONLINE!"
 
       - name: Create DB user & store secret
+        id: create_user
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -68,6 +69,9 @@ jobs:
           script: |
             echo "Generating password..."
             PASSWORD=$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9@#$%&*!' | head -c 20)
+            echo "Generated password: $PASSWORD"
+
+            echo "::set-output name=password::$PASSWORD"
 
             echo "Creating or updating DB user..."
             /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -d PreviewEnvironmentDB -Q "
@@ -81,20 +85,21 @@ jobs:
 
             ALTER ROLE db_owner ADD MEMBER [preview_env_user];
             "
-
+    
       - name: Upsert secret
         run: |
+          echo "Using password: ${{ steps.create_user.outputs.password }}"
           if aws secretsmanager describe-secret --secret-id preview-env-user-secret --region eu-west-1; then
             echo "Secret exists, updating.."
             aws secretsmanager put-secret-value \
               --secret-id preview-env-user-secret \
-              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}" \
+              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${{ steps.create_user.outputs.password }}\"}" \
               --region eu-west-1
           else
             echo "Secret does not exist, creating.."
             aws secretsmanager create-secret \
               --name preview-env-user-secret \
-              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}" \
+              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${{ steps.create_user.outputs.password }}\"}" \
               --region eu-west-1
           fi
 
