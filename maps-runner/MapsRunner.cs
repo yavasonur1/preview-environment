@@ -8,6 +8,10 @@ using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Newtonsoft.Json.Linq;
 using System.Data.SqlClient;
+using ECSTag = Amazon.ECS.Model.Tag;
+using SecretsTag = Amazon.SecretsManager.Model.Tag;
+using Task = System.Threading.Tasks.Task;
+
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 
@@ -104,13 +108,13 @@ namespace MapsRunner
                         }
                     },
                     StartedBy = STARTED_BY,
-                    Tags = new List<Tag>
+                    Tags = new List<ECSTag>
                     {
-                        new Tag { Key = "StartedBy", Value = STARTED_BY },
-                        new Tag { Key = "Customer", Value = "Invent" },
-                        new Tag { Key = "Environment", Value = "Development" },
-                        new Tag { Key = "Project", Value = "MapsUnified" },
-                        new Tag { Key = "ServerType", Value = "ECS" }
+                        new ECSTag { Key = "StartedBy", Value = STARTED_BY },
+                        new ECSTag { Key = "Customer", Value = "Invent" },
+                        new ECSTag { Key = "Environment", Value = "Development" },
+                        new ECSTag { Key = "Project", Value = "MapsUnified" },
+                        new ECSTag { Key = "ServerType", Value = "ECS" }
                     }
                 };
 
