@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Amazon.ECS;
+using Amazon.ECS.Model;
 using Amazon.Lambda.Core;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
@@ -15,10 +18,10 @@ namespace MapsRunner
         public async Task FunctionHandler(object input, ILambdaContext context)
         {
             string secretName = "preview-env-user-secret";
-            var client = new AmazonSecretsManagerClient(Amazon.RegionEndpoint.EUWest1);
-            var request = new GetSecretValueRequest { SecretId = secretName };
-            var response = await client.GetSecretValueAsync(request);
-            var secret = JObject.Parse(response.SecretString);
+            var secretsClient = new AmazonSecretsManagerClient(Amazon.RegionEndpoint.EUWest1);
+            var secretsRequest = new GetSecretValueRequest { SecretId = secretName };
+            var secretsResponse = await secretsClient.GetSecretValueAsync(secretsRequest);
+            var secret = JObject.Parse(secretsResponse.SecretString);
 
             string username = secret["username"].ToString();
             string password = secret["password"].ToString();
@@ -47,6 +50,88 @@ namespace MapsRunner
                 var updateCmd = new SqlCommand("UPDATE engine.AlgoRuns SET Status = 6 WHERE RunId = @runId", conn);
                 updateCmd.Parameters.AddWithValue("@runId", runId);
                 await updateCmd.ExecuteNonQueryAsync();
+
+                #region Trigger Ecs Task
+
+                var ecsClient = new AmazonECSClient(Amazon.RegionEndpoint.EUWest1);
+
+                string STARTED_BY = "Preview-Env";
+                string CUSTOMER_NAME = "IntegrationTest";
+                string DB_ENV_TYPE = "preview";
+                string CONTAINER = "mapsunified";
+                string TASK_DEF = "PreviewEnvRunner";
+                string CLUSTER = "acme-dev-cluster";
+
+                var ecsRequest = new RunTaskRequest
+                {
+                    Cluster = CLUSTER,
+                    TaskDefinition = TASK_DEF,
+                    LaunchType = LaunchType.FARGATE,
+                    NetworkConfiguration = new NetworkConfiguration
+                    {
+                        AwsvpcConfiguration = new AwsVpcConfiguration
+                        {
+                            Subnets = new List<string>
+                            {
+                                "subnet-0c44a1300ce62a61e"
+                            }
+                        }
+                    },
+                    Overrides = new TaskOverride
+                    {
+                        ContainerOverrides = new List<ContainerOverride>
+                        {
+                            new ContainerOverride
+                            {
+                                Name = CONTAINER,
+                                Command = new List<string>
+                                {
+                                    "dotnet",
+                                    "Maps.Runner.dll",
+                                    "--run-id", runId.ToString(),
+                                    "--customer-name", CUSTOMER_NAME,
+                                    "--environment-type", DB_ENV_TYPE
+                                },
+                                Environment = new List<Amazon.ECS.Model.KeyValuePair>
+                                {
+                                    new Amazon.ECS.Model.KeyValuePair
+                                    {
+                                        Name = "TZ",
+                                        Value = "Europe/Istanbul"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    StartedBy = STARTED_BY,
+                    Tags = new List<Tag>
+                    {
+                        new Tag { Key = "StartedBy", Value = STARTED_BY },
+                        new Tag { Key = "Customer", Value = "Invent" },
+                        new Tag { Key = "Environment", Value = "Development" },
+                        new Tag { Key = "Project", Value = "MapsUnified" },
+                        new Tag { Key = "ServerType", Value = "ECS" }
+                    }
+                };
+
+                var ecsResponse = await ecsClient.RunTaskAsync(ecsRequest);
+
+                if (ecsResponse.Tasks.Count > 0)
+                {
+                    var taskArn = ecsResponse.Tasks[0].TaskArn.Split('/')[^1];
+
+                    var ecsLogLink = $"https://eu-west-1.console.aws.amazon.com/ecs/v2/clusters/{CLUSTER}/tasks/{taskArn}/logs?region=eu-west-1";
+                    var cloudwatchLink = $"https://eu-west-1.console.aws.amazon.com/cloudwatch/home?region=eu-west-1#logEventViewer:group=/ecs/{CONTAINER};stream=ecs/{CONTAINER}/{taskArn}";
+
+                    context.Logger.LogLine($"ECS Logs => {ecsLogLink}");
+                    context.Logger.LogLine($"Cloudwatch Logs => {cloudwatchLink}");
+                }
+                else
+                {
+                    context.Logger.LogLine("No ECS task was started.");
+                }
+
+                #endregion
             }
         }
     }
