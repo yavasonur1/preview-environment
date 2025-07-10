@@ -1,11 +1,11 @@
 using System;
+using System.Threading.Tasks;
 using Amazon.Lambda.Core;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Newtonsoft.Json.Linq;
 using System.Data.SqlClient;
 
-// Assembly attribute for Lambda runtime
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 
 namespace MapsRunner
@@ -17,7 +17,7 @@ namespace MapsRunner
             string secretName = "preview-env-user-secret";
             var client = new AmazonSecretsManagerClient(Amazon.RegionEndpoint.EUWest1);
             var request = new GetSecretValueRequest { SecretId = secretName };
-            var response = client.GetSecretValueAsync(request).Result;
+            var response = await client.GetSecretValueAsync(request);
             var secret = JObject.Parse(response.SecretString);
 
             string username = secret["username"].ToString();
@@ -30,15 +30,15 @@ namespace MapsRunner
 
             using (var conn = new SqlConnection(connStr))
             {
-                conn.Open();
+                await conn.OpenAsync();
 
                 var selectCmd = new SqlCommand("SELECT TOP 1 RunId FROM engine.AlgoRuns WHERE Status = 0 ORDER BY RunId", conn);
-                var runId = selectCmd.ExecuteScalar();
+                var runIdObj = await selectCmd.ExecuteScalarAsync();
 
-                if (runId == null)
+                if (runIdObj == null)
                 {
                     context.Logger.LogLine("There is no new run..");
-                    return null;
+                    return;
                 }
 
                 int runId = (int)runIdObj;
@@ -46,7 +46,7 @@ namespace MapsRunner
 
                 var updateCmd = new SqlCommand("UPDATE engine.AlgoRuns SET Status = 6 WHERE RunId = @runId", conn);
                 updateCmd.Parameters.AddWithValue("@runId", runId);
-                updateCmd.ExecuteNonQuery();
+                await updateCmd.ExecuteNonQueryAsync();
             }
         }
     }
