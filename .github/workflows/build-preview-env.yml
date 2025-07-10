@@ -142,13 +142,13 @@ jobs:
         uses: aws-actions/setup-sam@v2
 
       - name: Build with SAM
-        run: sam build
+        run: sam build -t maps-runner/template.yml
 
       - name: Deploy with SAM
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name maps-runner-stack --capabilities CAPABILITY_IAM
+        run: sam deploy -t maps-runner/template.yml --no-confirm-changeset --no-fail-on-empty-changeset --stack-name maps-runner-stack --s3-bucket acme-preview-lambda-buckets --capabilities CAPABILITY_IAM
       
       
       - name: Configure AWS credentials
