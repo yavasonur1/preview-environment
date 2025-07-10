@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: .NET 8 Lambda for DB check
+
+Resources:
+  MapsRunnerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: MapsRunnerFunction
+      Handler: MapsRunner::MapsRunner::Function::FunctionHandler
+      Runtime: dotnet8
+      MemorySize: 256
+      Timeout: 30
+      Role: arn:aws:iam::924947995844:role/AcmePreviewEnvironmentEC2
+      Events:
+        FiveMinuteTrigger:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)

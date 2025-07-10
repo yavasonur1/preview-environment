@@ -1,0 +1,10 @@
+{
+  "profile": "default",
+  "region": "eu-west-1",
+  "configuration": "Release",
+  "framework": "net8.0",
+  "function-name": "MapsRunnerFunction",
+  "template": "template.yaml",
+  "s3-prefix": "maps-runner/",
+  "stack-name": "maps-runner-stack"
+}
