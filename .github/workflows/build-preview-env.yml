@@ -62,7 +62,8 @@ jobs:
       - name: Generate password
         id: pwgen
         run: |
-          PASSWORD=$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9@#$%&*!' | head -c 20)
+          PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9@#$%&*!' | head -c 25)
+          echo "Generated password: $PASSWORD"
           echo "password=$PASSWORD" >> $GITHUB_OUTPUT
       
       - name: Create DB user & store secret
@@ -73,6 +74,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: PASSWORD
           script: |
+            echo "Using password: ${{ steps.pwgen.outputs.password }}"
             echo "Creating or updating DB user..."
             /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -d PreviewEnvironmentDB -Q "
             IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'preview_env_user')
@@ -88,6 +90,7 @@ jobs:
 
       - name: Upsert secret
         run: |
+          echo "Using password: ${{ steps.pwgen.outputs.password }}"
           PASSWORD=${{ steps.pwgen.outputs.password }}
           if aws secretsmanager describe-secret --secret-id preview-env-user-secret --region eu-west-1; then
             echo "Secret exists, updating.."
