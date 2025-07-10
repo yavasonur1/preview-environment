@@ -1,7 +1,4 @@
 using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using Amazon.Lambda.Core;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
@@ -18,16 +15,9 @@ namespace MapsRunner
         public async Task FunctionHandler(object input, ILambdaContext context)
         {
             string secretName = "preview-env-user-secret";
-            string region = "eu-west-1";
-
             var client = new AmazonSecretsManagerClient(Amazon.RegionEndpoint.EUWest1);
-
-            var request = new GetSecretValueRequest
-            {
-                SecretId = secretName
-            };
-
-            var response = await client.GetSecretValueAsync(request);
+            var request = new GetSecretValueRequest { SecretId = secretName };
+            var response = client.GetSecretValueAsync(request).Result;
             var secret = JObject.Parse(response.SecretString);
 
             string username = secret["username"].ToString();
@@ -41,14 +31,22 @@ namespace MapsRunner
             using (var conn = new SqlConnection(connStr))
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM Users", conn);
-                var reader = cmd.ExecuteReader();
 
-                while (reader.Read())
+                var selectCmd = new SqlCommand("SELECT TOP 1 RunId FROM engine.AlgoRuns WHERE Status = 0 ORDER BY RunId", conn);
+                var runId = selectCmd.ExecuteScalar();
+
+                if (runId == null)
                 {
-                    Console.WriteLine($"{reader[0]}");
-                    context.Logger.LogLine($"{reader[0]}");
+                    context.Logger.LogLine("There is no new run..");
+                    return null;
                 }
+
+                int runId = (int)runIdObj;
+                context.Logger.LogLine($"Processed RunId: {runId}");
+
+                var updateCmd = new SqlCommand("UPDATE engine.AlgoRuns SET Status = 6 WHERE RunId = @runId", conn);
+                updateCmd.Parameters.AddWithValue("@runId", runId);
+                updateCmd.ExecuteNonQuery();
             }
         }
     }
