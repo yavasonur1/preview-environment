@@ -77,7 +77,7 @@ namespace MapsRunner
                         {
                             Subnets = new List<string>
                             {
-                                "subnet-0c44a1300ce62a61e"
+                                "subnet-0ac29334341b00a18"
                             }
                         }
                     },
