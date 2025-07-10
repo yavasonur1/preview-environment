@@ -9,6 +9,7 @@ Resources:
       FunctionName: MapsRunnerFunction
       Handler: MapsRunner::MapsRunner::Function::FunctionHandler
       Runtime: dotnet6
+      CodeUri: ./maps-runner
       MemorySize: 256
       Timeout: 30
       Role: arn:aws:iam::924947995844:role/AcmePreviewEnvironmentEC2
