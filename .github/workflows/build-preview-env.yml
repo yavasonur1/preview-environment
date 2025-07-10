@@ -59,27 +59,26 @@ jobs:
             done
             echo "✅ DB is ONLINE!"
 
+      - name: Generate password
+        id: pwgen
+        run: |
+          PASSWORD=$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9@#$%&*!' | head -c 20)
+          echo "password=$PASSWORD" >> $GITHUB_OUTPUT
+      
       - name: Create DB user & store secret
-        id: create_user
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: PASSWORD
           script: |
-            echo "Generating password..."
-            PASSWORD=$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9@#$%&*!' | head -c 20)
-            echo "Generated password: $PASSWORD"
-
-            # Set output the new way
-            echo "password=$PASSWORD" >> $GITHUB_OUTPUT
-
             echo "Creating or updating DB user..."
             /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -d PreviewEnvironmentDB -Q "
             IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'preview_env_user')
-              CREATE LOGIN [preview_env_user] WITH PASSWORD = \"$PASSWORD\";
+              CREATE LOGIN [preview_env_user] WITH PASSWORD = '${PASSWORD}';
             ELSE
-              ALTER LOGIN [preview_env_user] WITH PASSWORD = \"$PASSWORD\";
+              ALTER LOGIN [preview_env_user] WITH PASSWORD = '${PASSWORD}';
 
             IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'preview_env_user')
               CREATE USER [preview_env_user] FOR LOGIN [preview_env_user];
@@ -89,18 +88,18 @@ jobs:
 
       - name: Upsert secret
         run: |
-          echo "Using password: ${{ steps.create_user.outputs.password }}"
+          PASSWORD=${{ steps.pwgen.outputs.password }}
           if aws secretsmanager describe-secret --secret-id preview-env-user-secret --region eu-west-1; then
             echo "Secret exists, updating.."
             aws secretsmanager put-secret-value \
               --secret-id preview-env-user-secret \
-              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${{ steps.create_user.outputs.password }}\"}" \
+              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}" \
               --region eu-west-1
           else
             echo "Secret does not exist, creating.."
             aws secretsmanager create-secret \
               --name preview-env-user-secret \
-              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${{ steps.create_user.outputs.password }}\"}" \
+              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}" \
               --region eu-west-1
           fi
 
