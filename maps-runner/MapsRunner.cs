@@ -3,8 +3,6 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Amazon.Lambda.Core;
-using Amazon.SecretsManager;
-using Amazon.SecretsManager.Model;
 using Newtonsoft.Json.Linq;
 using System.Data.SqlClient;
 
@@ -17,21 +15,8 @@ namespace MapsRunner
     {
         public async Task FunctionHandler(object input, ILambdaContext context)
         {
-            string secretName = "preview-env-user-secret";
-            string region = "eu-west-1";
-
-            var client = new AmazonSecretsManagerClient(Amazon.RegionEndpoint.EUWest1);
-
-            var request = new GetSecretValueRequest
-            {
-                SecretId = secretName
-            };
-
-            var response = await client.GetSecretValueAsync(request);
-            var secret = JObject.Parse(response.SecretString);
-
-            string username = secret["username"].ToString();
-            string password = secret["password"].ToString();
+            string username = "SA";
+            string password = "Onur123.";
 
             string server = "54.171.82.24";
             string database = "PreviewEnvironmentDB";
