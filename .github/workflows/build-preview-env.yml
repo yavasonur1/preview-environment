@@ -65,8 +65,8 @@ jobs:
           UPPER=$(tr -dc 'A-Z' </dev/urandom | head -c1)
           LOWER=$(tr -dc 'a-z' </dev/urandom | head -c1)
           DIGIT=$(tr -dc '0-9' </dev/urandom | head -c1)
-          SYMBOL=$(echo '!@#$%^&*()_+=' | fold -w1 | shuf | head -c1)
-          REMAINING=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c4)
+          SYMBOL=$(echo '@#$%&*!' | fold -w1 | shuf | head -c1)
+          REMAINING=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c8)
           PASSWORD="${UPPER}${LOWER}${DIGIT}${SYMBOL}${REMAINING}"
           PASSWORD=$(echo "$PASSWORD" | fold -w1 | shuf | tr -d '\n')
           echo "Generated password: $PASSWORD"
