@@ -103,14 +103,14 @@ jobs:
           if aws secretsmanager describe-secret --secret-id preview-env-user-secret --region eu-west-1; then
             echo "Secret exists, updating.."
             aws secretsmanager put-secret-value \
-              --secret-id preview-env-user-secret \
-              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}" \
+              --secret-id integrationtest-preview-maps \
+              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\",\"host\":\"54.171.82.24\",\"engine\":\"mssql\",\"database\":\"PreviewEnvironmentDB\"}" \
               --region eu-west-1
           else
             echo "Secret does not exist, creating.."
             aws secretsmanager create-secret \
-              --name preview-env-user-secret \
-              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}" \
+              --name integrationtest-preview-maps \
+              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\",\"host\":\"54.171.82.24\",\"engine\":\"mssql\",\"database\":\"PreviewEnvironmentDB\"}" \
               --region eu-west-1
           fi
 
