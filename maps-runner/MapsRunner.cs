@@ -60,7 +60,7 @@ namespace MapsRunner
                 var ecsClient = new AmazonECSClient(Amazon.RegionEndpoint.EUWest1);
 
                 string STARTED_BY = "Preview-Env";
-                string CUSTOMER_NAME = "IntegrationTest";
+                string CUSTOMER_NAME = "integrationtest";
                 string DB_ENV_TYPE = "preview";
                 string CONTAINER = "mapsunified";
                 string TASK_DEF = "PreviewEnvRunner";
