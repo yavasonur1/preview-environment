@@ -78,10 +78,6 @@ namespace MapsRunner
                             Subnets = new List<string>
                             {
                                 "subnet-0ac29334341b00a18"
-                            },
-                            SecurityGroups = new List<string>
-                            {
-                                "sg-0ab204d9f4f167e3e"
                             }
                         }
                     },
