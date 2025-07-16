@@ -81,7 +81,7 @@ namespace MapsRunner
                             },
                             SecurityGroups = new List<string>
                             {
-                                "sg-0ab204d9f4f167e3e"
+                                "sg-02b51ab735ac02f25"
                             }
                         }
                     },
