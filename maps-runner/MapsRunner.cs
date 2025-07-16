@@ -78,7 +78,8 @@ namespace MapsRunner
                             Subnets = new List<string>
                             {
                                 "subnet-0ac29334341b00a18"
-                            }
+                            },
+                            SecurityGroups = new List<string>{}
                         }
                     },
                     Overrides = new TaskOverride
@@ -103,8 +104,7 @@ namespace MapsRunner
                                         Name = "TZ",
                                         Value = "Europe/Istanbul"
                                     }
-                                },
-                                SecurityGroups = new List<string>{}
+                                }
                             }
                         }
                     },
