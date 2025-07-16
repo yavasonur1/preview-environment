@@ -103,7 +103,8 @@ namespace MapsRunner
                                         Name = "TZ",
                                         Value = "Europe/Istanbul"
                                     }
-                                }
+                                },
+                                SecurityGroups = new List<string>{}
                             }
                         }
                     },
