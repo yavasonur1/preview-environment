@@ -42,8 +42,14 @@ jobs:
             echo "Downloading backup file..."
             aws s3 cp s3://acme-preview-database-backups/PreviewEnvironmentDB.bak /var/opt/mssql/data/PreviewEnvironmentDB.bak
 
+            echo "Setting database to single user mode..."
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -Q "ALTER DATABASE [PreviewEnvironmentDB] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;"
+
             echo "SQL Server starting the restore..."
-            /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -Q "RESTORE DATABASE [PreviewEnvironmentDB] FROM DISK = '/var/opt/mssql/data/PreviewEnvironmentDB.bak' WITH REPLACE"
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -Q "RESTORE DATABASE [PreviewEnvironmentDB] FROM DISK = '/var/opt/mssql/data/PreviewEnvironmentDB.bak' WITH REPLACE;"
+
+            echo "Setting database back to multi user mode..."
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '${{ secrets.DB_SA_PASSWORD }}' -Q "ALTER DATABASE [PreviewEnvironmentDB] SET MULTI_USER;"
 
       - name: Check DB online
         uses: appleboy/ssh-action@v1.0.0
