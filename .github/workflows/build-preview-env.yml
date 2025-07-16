@@ -104,7 +104,7 @@ jobs:
             echo "Secret exists, updating.."
             aws secretsmanager put-secret-value \
               --secret-id preview-env-user-secret \
-              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\"}" \
+              --secret-string "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\",\"host\":\"54.171.82.24\",\"engine\":\"mssql\",\"database\":\"PreviewEnvironmentDB\"}" \
               --region eu-west-1
           else
             echo "Secret does not exist, creating.."
