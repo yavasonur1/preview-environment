@@ -21,7 +21,7 @@ namespace MapsRunner
     {
         public async Task FunctionHandler(object input, ILambdaContext context)
         {
-            string secretName = "preview-env-user-secret";
+            string secretName = "integrationtest-preview-maps";
             var secretsClient = new AmazonSecretsManagerClient(Amazon.RegionEndpoint.EUWest1);
             var secretsRequest = new GetSecretValueRequest { SecretId = secretName };
             var secretsResponse = await secretsClient.GetSecretValueAsync(secretsRequest);
