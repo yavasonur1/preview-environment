@@ -25,6 +25,9 @@ env:
   AZURE_BLOB_CONTAINER_NAME: 'acme-dev-container'
   AZURE_LOCATION: 'westeurope'
 
+permissions:
+  id-token: write
+
 jobs:
   # AWS'deki 'publish-to-maps-database' job'ının Azure karşılığı
   restore-azure-sql-database:
