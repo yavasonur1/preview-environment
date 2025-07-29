@@ -1,0 +1,187 @@
+name: Preview Environment Pipeline (Azure Version)
+
+on:
+  workflow_dispatch:
+    inputs:
+      customer_name:
+        description: 'Customer name'
+        required: true
+        type: string
+      mapsunified_pr:
+        description: 'Mapsunified PR'
+        required: false
+        type: string
+      mapsdatabase_pr:
+        description: 'Mapsdatabase PR'
+        required: false
+        type: string
+
+env:
+  AZURE_RESOURCE_GROUP: 'acme-dev-rg'
+  AZURE_SQL_SERVER_NAME: 'preview-env-server.database.windows.net'
+  AZURE_SQL_DB_NAME: 'PreviewEnvironmentDB'
+  AZURE_CONTAINER_REGISTRY_NAME: 'inventdev'
+  AZURE_STORAGE_ACCOUNT_NAME: 'acmedevstorageaccount'
+  AZURE_BLOB_CONTAINER_NAME: 'acme-dev-container'
+  AZURE_LOCATION: 'westeurope'
+
+jobs:
+  # AWS'deki 'publish-to-maps-database' job'ının Azure karşılığı
+  restore-azure-sql-database:
+    if: ${{ github.event.inputs.mapsdatabase_pr != '' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download DB Backup from Azure Blob Storage
+        # Azure SQL DB'ye yedek dosyayı doğrudan yüklemek yerine, genellikle Blob Storage'dan geri yüklersiniz.
+        # Azure SQL DB'lerde doğrudan SSH erişimi olmadığından, RESTORE DATABASE komutu farklı çalışır.
+        # Genellikle BACPAC dosyaları ile dışa/içe aktarma yapılır veya Azure SQL Managed Instance kullanılıyorsa,
+        # VM üzerindeki SQL Server'a benzer RESTORE komutları kullanılabilir.
+        # Bu örnek, BACPAC dosyasının Blob Storage'dan Azure SQL DB'ye aktarımını simüle eder.
+        # Gerçek bir .bak dosyasını Azure SQL DB'ye restore etmek için Azure SQL Managed Instance
+        # veya farklı bir yöntem (örneğin SSMS ile restore) gerekebilir.
+        run: |
+          echo "This step would involve preparing the BACPAC file for Azure SQL DB import."
+          # If you were importing a BACPAC:
+          # az sql db import --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          #   --server ${{ env.AZURE_SQL_SERVER_NAME }} --name ${{ env.AZURE_SQL_DB_NAME }} \
+          #   --admin-user ${{ secrets.DB_SA_USERNAME }} --admin-password ${{ secrets.DB_SA_PASSWORD_AZURE }} \
+          #   --storage-key-type StorageAccessKey --storage-key ${{ secrets.AZURE_STORAGE_KEY }} \
+          #   --storage-uri https://${{ env.AZURE_STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.AZURE_BLOB_CONTAINER_NAME }}/PreviewEnvironmentDB.bacpac
+          echo "For .bak files, consider using Azure SQL Managed Instance or a SQL Server VM on Azure."
+          echo "For Azure SQL Database, consider using BACPAC export/import."
+
+
+      - name: Generate strong MSSQL password
+        id: pwgen
+        run: |
+          # PowerShell veya Bash tabanlı bir şifre üretici
+          # Ubuntu çalıştırdığımız için bash uyumlu kalabilir
+          UPPER=$(tr -dc 'A-Z' </dev/urandom | head -c1)
+          LOWER=$(tr -dc 'a-z' </dev/urandom | head -c1)
+          DIGIT=$(tr -dc '0-9' </dev/urandom | head -c1)
+          SYMBOL=$(echo '@#$%&*!' | fold -w1 | shuf | head -c1)
+          REMAINING=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c8)
+          PASSWORD="${UPPER}${LOWER}${DIGIT}${SYMBOL}${REMAINING}"
+          PASSWORD=$(echo "$PASSWORD" | fold -w1 | shuf | tr -d '\n')
+          echo "Generated password: $PASSWORD"
+          echo "password=$PASSWORD" >> $GITHUB_OUTPUT
+
+      - name: Create DB user & store secret in Azure Key Vault
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            echo "Using password from pwgen: ${{ steps.pwgen.outputs.password }}"
+            PASSWORD="${{ steps.pwgen.outputs.password }}"
+            SQL_SERVER_FQDN=$(az sql server show --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --name ${{ env.AZURE_SQL_SERVER_NAME }} --query fullyQualifiedDomainName -o tsv)
+            
+            # Azure SQL DB'ye bağlanmak için sqlcmd gereklidir, ancak SSH yerine doğrudan bağlantı.
+            # Azure Cloud Shell veya kurumsal bir ortamda Azure DevOps agent'ında doğrudan kurabilirsiniz.
+            # Veya bir Docker imajında sqlcmd çalıştırabilirsiniz.
+            # Burada, Azure CLI'nın sql uzantısını kullanarak kullanıcı oluşturmayı simüle ediyoruz.
+            # Gerçekte, AD kullanıcısı veya SSMS aracılığıyla daha kolay yapılabilir.
+            echo "Creating or updating DB user in Azure SQL DB..."
+            # Bu kısım manuel veya daha gelişmiş bir Azure SQL DB kullanıcı yönetimi ile yapılmalıdır.
+            # Azure SQL DB'de 'CREATE LOGIN' sunucu seviyesinde bir komuttur ve genellikle admin yetkileri gerektirir.
+            # Bir CLI komutu ile kullanıcı oluşturmak karmaşık olabilir. Örnek olarak:
+            # az sql db user create --server ${{ env.AZURE_SQL_SERVER_NAME }} --db-name ${{ env.AZURE_SQL_DB_NAME }} --name preview_env_user --password ${PASSWORD} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+
+            # Key Vault'a şifreyi kaydet
+            echo "Upserting secret into Azure Key Vault..."
+            az keyvault secret set --vault-name your-key-vault-name \
+              --name MapsPreviewDbCredentials \
+              --value "{\"username\":\"preview_env_user\",\"password\":\"${PASSWORD}\",\"host\":\"${SQL_SERVER_FQDN}\",\"engine\":\"mssql\",\"database\":\"${{ env.AZURE_SQL_DB_NAME }}\"}"
+
+  # AWS'deki 'build-image-and-push' job'ının Azure karşılığı
+  build-and-push-to-acr:
+    if: ${{ github.event.inputs.mapsunified_pr != '' }}
+    runs-on: ubuntu-latest
+    env:
+      VERSION: 0.${{ github.run_number }}
+      # AZURE_CONTAINER_REGISTRY_LOGIN_SERVER: ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io
+    steps:
+      - name: Checkout specific branch of another repository
+        uses: actions/checkout@v3
+        with:
+          repository: inventanalytics/mapsunified # Replace with the actual owner/repo name
+          ref: ${{ github.event.inputs.mapsunified_pr }}       # Specify the branch name here
+          path: .   # Directory to clone the other repo into
+          token: ${{ secrets.TOKEN }} # Required for private repositories
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}
+
+      - name: Build Docker Image for Azure
+        shell: bash
+        run: |
+          docker build -t ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-dev-repository:$VERSION \
+                       -t ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-dev-repository:latest .
+          echo "Building image..."
+
+      - name: Push Docker Image to Azure Container Registry
+        shell: bash
+        run: |
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-dev-repository:$VERSION
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-dev-repository:latest
+          echo "Pushing image..."
+
+  # AWS'deki 'create-and-deploy-lambda' job'ının Azure karşılığı
+  build-and-deploy-azure-function:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x' # Azure Functions için .NET 6.0'ı koruyabiliriz
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Azure Functions Core Tools
+        run: |
+          npm install -g azure-functions-core-tools@4 --unsafe-perm true
+
+      - name: Build Azure Function Project
+        run: |
+          # maps-runner/template.yml yerine Azure Functions projenizin kök dizinine gidin
+          # dotnet publish komutu, Azure Function'ı yayımlanmaya hazır hale getirir
+          dotnet publish maps-runner/MapsRunner.csproj -c Release -o ./publish
+          # Eğer bir proje dosyanız varsa, örneğin 'maps-runner/MapsRunner.csproj'
+          # veya tüm solution'ı build etmek isterseniz:
+          # dotnet build --configuration Release
+
+      - name: Deploy Azure Function to Azure
+        run: |
+          # Azure Function App'inizi daha önce oluşturmuş olmalısınız.
+          # Bu komut, yayımlanmış dosyaları Azure Function App'inize dağıtır.
+          # Uygulama adını ve kaynak grubunu doğru şekilde ayarlayın.
+          az functionapp publish --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name your-azure-function-app-name \
+            --src "./publish" --runtime dotnet --os linux
+          echo "Azure Function deployed!"
