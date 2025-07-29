@@ -44,7 +44,7 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          auth-type: 'service-principal'
+          auth-type: 'SERVICE_PRINCIPAL'
 
       - name: Download DB Backup from Azure Blob Storage
         # Azure SQL DB'ye yedek dosyayı doğrudan yüklemek yerine, genellikle Blob Storage'dan geri yüklersiniz.
