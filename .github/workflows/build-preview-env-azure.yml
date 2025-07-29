@@ -16,9 +16,6 @@ on:
         required: false
         type: string
 
-permissions:
-  id-token: write
-
 env:
   AZURE_RESOURCE_GROUP: 'acme-dev-rg'
   AZURE_SQL_SERVER_NAME: 'preview-env-server.database.windows.net'
@@ -38,13 +35,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Azure Login Step
+      - name: Set up Azure CLI
+        uses: azure/setup-azurecli@v1
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          auth-type: 'SERVICE_PRINCIPAL'
 
       - name: Download DB Backup from Azure Blob Storage
         # Azure SQL DB'ye yedek dosyayı doğrudan yüklemek yerine, genellikle Blob Storage'dan geri yüklersiniz.
