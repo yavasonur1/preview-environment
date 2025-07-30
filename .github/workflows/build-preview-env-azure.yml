@@ -46,7 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: 0.${{ github.run_number }}
-      AZURE_CONTAINER_REGISTRY_NAME: inventpreviewenv
+      ACR_NAME: inventpreviewenv
+      ACR_REPOSITORY: mapsunified-preview-repository
     steps:
       - name: Checkout specific branch of another repository
         uses: actions/checkout@v3
@@ -63,21 +64,20 @@ jobs:
 
       - name: Login to Azure Container Registry
         run: |
-          az acr login --name ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}
+          az acr login --name $ACR_NAME
 
-      - name: Build and Push Docker Image
+      - name: Build and Tag Docker Image
         run: |
-            IMAGE=${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/myapp:latest
-            docker build -t $IMAGE .
-            docker push $IMAGE
-          echo "Building image..."
+          IMAGE=$ACR_NAME.azurecr.io/$ACR_REPOSITORY:$VERSION
+          docker build -t $IMAGE .
+          docker tag $IMAGE $ACR_NAME.azurecr.io/$ACR_REPOSITORY:latest
+          echo "Docker image built and tagged"
 
-      - name: Push Docker Image to Azure Container Registry
-        shell: bash
+      - name: Push Docker Images
         run: |
-          docker push ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-preview-repository:$VERSION
-          docker push ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-preview-repository:latest
-          echo "Pushing image..."
+          docker push $ACR_NAME.azurecr.io/$ACR_REPOSITORY:$VERSION
+          docker push $ACR_NAME.azurecr.io/$ACR_REPOSITORY:latest
+          echo "Docker image pushed to ACR"
 
   # AWS'deki 'create-and-deploy-lambda' job'ının Azure karşılığı
   build-and-deploy-azure-function:
