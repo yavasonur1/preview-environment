@@ -25,19 +25,24 @@ env:
   AZURE_BLOB_CONTAINER_NAME: 'acme-dev-container'
   AZURE_LOCATION: 'westeurope'
 
-permissions:
-  id-token: write
-  contents: read
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Azure login
-        uses: azure/login@v2
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Azure CLI örneği (test için)
+        run: |
+          az account show
 
       - name: Download DB Backup from Azure Blob Storage
         # Azure SQL DB'ye yedek dosyayı doğrudan yüklemek yerine, genellikle Blob Storage'dan geri yüklersiniz.
