@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: 0.${{ github.run_number }}
-      AZURE_CONTAINER_REGISTRY_NAME: ${{ 'inventpreviewenv.azurecr.io/mapsunified-preview-repository' }}
+      AZURE_CONTAINER_REGISTRY_NAME: inventpreviewenv
     steps:
       - name: Checkout specific branch of another repository
         uses: actions/checkout@v3
