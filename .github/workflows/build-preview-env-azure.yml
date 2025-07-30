@@ -46,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: 0.${{ github.run_number }}
+      AZURE_CONTAINER_REGISTRY_NAME: ${{ 'inventpreviewenv.azurecr.io/mapsunified-preview-repository' }}
     steps:
       - name: Checkout specific branch of another repository
         uses: actions/checkout@v3
@@ -74,8 +75,8 @@ jobs:
       - name: Push Docker Image to Azure Container Registry
         shell: bash
         run: |
-          docker push ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-dev-repository:$VERSION
-          docker push ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-dev-repository:latest
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-preview-repository:$VERSION
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY_NAME }}.azurecr.io/mapsunified-preview-repository:latest
           echo "Pushing image..."
 
   # AWS'deki 'create-and-deploy-lambda' job'ının Azure karşılığı
