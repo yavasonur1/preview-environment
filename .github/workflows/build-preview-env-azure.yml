@@ -48,15 +48,22 @@ jobs:
           sudo ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc-dev
           echo "/opt/mssql-tools/bin" >> $GITHUB_PATH
 
-      - name: Download and restore .bak on Windows VM via PowerShell Remoting
-        uses: microsoft/powershell@v1
+      - name: Install PowerShell
+        run: |
+          wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y powershell
+          pwsh --version
+
+      - name: Run PowerShell Remoting commands on Windows VM
+        shell: pwsh
         env:
           VM_IP: ${{ secrets.AZURE_VM_IP }}
           VM_USER: ${{ secrets.AZURE_VM_USER }}
           VM_PASS: ${{ secrets.AZURE_VM_PASS }}
           BLOB_URL: "https://acmedevstorageaccount.blob.core.windows.net/acme-dev-container/preview-env-backups/PreviewEnvironmentDB.bak${{ secrets.AZURE_BLOB_SAS }}"
           SQL_PASS: ${{ secrets.SQL_PASSWORD }}
-        shell: pwsh
         run: |
           $secpasswd = ConvertTo-SecureString $env:VM_PASS -AsPlainText -Force
           $cred = New-Object System.Management.Automation.PSCredential ($env:VM_USER, $secpasswd)
@@ -79,7 +86,9 @@ jobs:
 
             sqlcmd -S localhost -U sa -P $using:SQL_PASS -Q "RESTORE DATABASE [PreviewEnvironmentDB_Restored] FROM DISK = 'C:\temp\PreviewEnvironmentDB.bak' WITH MOVE 'PreviewEnvironmentDB' TO 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB_Restored.mdf', MOVE 'PreviewEnvironmentDB_log' TO 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB_Restored_log.ldf', REPLACE"
           }
+
           Remove-PSSession -Session $session
+
 
       - name: Connect to Database and Check AlgoRuns
         run: |
