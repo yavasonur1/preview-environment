@@ -48,7 +48,40 @@ jobs:
           sudo ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc-dev
           echo "/opt/mssql-tools/bin" >> $GITHUB_PATH
 
-      - name: Connect to Database and Restore
+      - name: Download and restore .bak on Windows VM via PowerShell Remoting
+        uses: microsoft/powershell@v1
+        env:
+          VM_IP: ${{ secrets.AZURE_VM_IP }}
+          VM_USER: ${{ secrets.AZURE_VM_USER }}
+          VM_PASS: ${{ secrets.AZURE_VM_PASS }}
+          BLOB_URL: "https://acmedevstorageaccount.blob.core.windows.net/acme-dev-container/preview-env-backups/PreviewEnvironmentDB.bak${{ secrets.AZURE_BLOB_SAS }}"
+          SQL_PASS: ${{ secrets.SQL_PASSWORD }}
+        shell: pwsh
+        run: |
+          $secpasswd = ConvertTo-SecureString $env:VM_PASS -AsPlainText -Force
+          $cred = New-Object System.Management.Automation.PSCredential ($env:VM_USER, $secpasswd)
+
+          $session = New-PSSession -ComputerName $env:VM_IP -Credential $cred -Authentication Negotiate
+
+          Invoke-Command -Session $session -ScriptBlock {
+            if (-Not (Test-Path -Path C:\temp)) {
+              New-Item -Path C:\temp -ItemType Directory
+            }
+
+            $azcopyPath = "C:\Windows\System32\azcopy.exe"
+            if (-Not (Test-Path $azcopyPath)) {
+              Invoke-WebRequest -Uri "https://aka.ms/downloadazcopy-v10-windows" -OutFile "C:\temp\azcopy.zip"
+              Expand-Archive -LiteralPath "C:\temp\azcopy.zip" -DestinationPath "C:\temp" -Force
+              Copy-Item "C:\temp\azcopy_windows*\azcopy.exe" "C:\Windows\System32"
+            }
+
+            & azcopy copy $using:BLOB_URL "C:\temp\PreviewEnvironmentDB.bak"
+
+            sqlcmd -S localhost -U sa -P $using:SQL_PASS -Q "RESTORE DATABASE [PreviewEnvironmentDB_Restored] FROM DISK = 'C:\temp\PreviewEnvironmentDB.bak' WITH MOVE 'PreviewEnvironmentDB' TO 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB_Restored.mdf', MOVE 'PreviewEnvironmentDB_log' TO 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB_Restored_log.ldf', REPLACE"
+          }
+          Remove-PSSession -Session $session
+
+      - name: Connect to Database and Check AlgoRuns
         run: |
           sqlcmd -S ${{ secrets.AZURE_SQL_HOST }} -U ${{ secrets.AZURE_SQL_USER }} -P ${{ secrets.AZURE_SQL_PASS }} -Q "SELECT @@VERSION"
 
