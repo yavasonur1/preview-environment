@@ -38,21 +38,20 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Show Azure Account
-        run: |
-          az account show
-          
+        run: az account show
+
       - name: Install sqlcmd and dependencies
         run: |
           curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
           curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
           sudo apt-get update
           sudo ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc-dev
-          
-      - name: Add mssql-tools to path
-        run: echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> $GITHUB_ENV
+          echo "/opt/mssql-tools/bin" >> $GITHUB_PATH
 
       - name: Connect to Database and Restore
-        run: sqlcmd -S ${{ secrets.AZURE_SQL_HOST }} -U ${{ secrets.AZURE_SQL_USER }} -P ${{ secrets.AZURE_SQL_PASS }} -Q "SELECT @@VERSION"
+        run: |
+          sqlcmd -S ${{ secrets.AZURE_SQL_HOST }} -U ${{ secrets.AZURE_SQL_USER }} -P ${{ secrets.AZURE_SQL_PASS }} -Q "SELECT @@VERSION"
+
 
   build-and-push-to-acr:
     if: ${{ github.event.inputs.mapsunified_pr != '' }}
