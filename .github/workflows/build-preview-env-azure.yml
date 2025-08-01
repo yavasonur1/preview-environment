@@ -54,6 +54,7 @@ jobs:
           host: ${{ secrets.AZURE_VM_IP }}
           username: ${{ secrets.AZURE_VM_USER }}
           key: ${{ secrets.AZURE_VM_SSH_KEY }}
+          password: ${{ secrets.AZURE_VM_PASSWORD }}
           script: |
             echo "✅ Creating temp folder..."
             if (!(Test-Path -Path "C:\temp")) {
