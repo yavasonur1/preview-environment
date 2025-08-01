@@ -56,28 +56,44 @@ jobs:
           key: ${{ secrets.AZURE_VM_SSH_KEY }}
           password: ${{ secrets.AZURE_VM_PASS }}
           script: |
-            echo "✅ Creating temp folder..."
-            if (!(Test-Path -Path "C:\temp")) {
-              New-Item -Path "C:\temp" -ItemType Directory
+            try {
+              echo "✅ Creating temp folder..."
+              if (!(Test-Path -Path "C:\temp")) {
+                New-Item -Path "C:\temp" -ItemType Directory -ErrorAction Stop
+              }
+
+              echo "⬇️ Downloading AzCopy..."
+              Invoke-WebRequest -Uri "https://aka.ms/downloadazcopy-v10-windows" -OutFile "C:\temp\azcopy.zip" -ErrorAction Stop
+
+              Expand-Archive -LiteralPath "C:\temp\azcopy.zip" -DestinationPath "C:\temp" -Force -ErrorAction Stop
+
+              $azcopyFolder = Get-ChildItem -Path "C:\temp" -Directory -ErrorAction Stop | Where-Object { $_.Name -like "azcopy_windows*" } | Select-Object -First 1
+              if (-not $azcopyFolder) {
+                throw "❌ AzCopy folder not found!"
+              }
+
+              $azcopyExePath = Join-Path -Path $azcopyFolder.FullName -ChildPath "azcopy.exe"
+              Copy-Item -Path $azcopyExePath -Destination "C:\Windows\System32" -Force -ErrorAction Stop
+
+              echo "📦 Downloading .bak file from Azure Blob..."
+              & azcopy copy "https://acmedevstorageaccount.blob.core.windows.net/acme-dev-container/preview-env-backups/PreviewEnvironmentDB.bak${{ secrets.AZURE_BLOB_SAS }}" "C:\temp\PreviewEnvironmentDB.bak"
+              if ($LASTEXITCODE -ne 0) {
+                throw "❌ AzCopy download failed with exit code $LASTEXITCODE"
+              }
+
+              echo "🧠 Restoring SQL database..."
+              & sqlcmd -S localhost -U previewenvuser -P "${{ secrets.SQL_PASSWORD }}" -Q "RESTORE DATABASE [PreviewEnvironmentDB] FROM DISK = 'C:\temp\PreviewEnvironmentDB.bak' WITH MOVE 'PreviewEnvironmentDB' TO 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB.mdf', MOVE 'PreviewEnvironmentDB_log' TO 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB_log.ldf', REPLACE"
+              if ($LASTEXITCODE -ne 0) {
+                throw "❌ SQL restore failed with exit code $LASTEXITCODE"
+              }
+
+              echo "✅ DONE."
             }
-
-            echo "⬇️ Downloading AzCopy..."
-            Invoke-WebRequest -Uri "https://aka.ms/downloadazcopy-v10-windows" -OutFile "C:\temp\azcopy.zip"
-            
-            Expand-Archive -LiteralPath "C:\temp\azcopy.zip" -DestinationPath "C:\temp" -Force
-            
-            $azcopyFolder = Get-ChildItem -Path "C:\temp" -Directory | Where-Object { $_.Name -like "azcopy_windows*" } | Select-Object -First 1
-            $azcopyExePath = Join-Path -Path $azcopyFolder.FullName -ChildPath "azcopy.exe"
-            
-            Copy-Item -Path $azcopyExePath -Destination "C:\Windows\System32" -Force
-
-            echo "📦 Downloading .bak file from Azure Blob..."
-            azcopy copy "https://acmedevstorageaccount.blob.core.windows.net/acme-dev-container/preview-env-backups/PreviewEnvironmentDB.bak${{ secrets.AZURE_BLOB_SAS }}" "C:\temp\PreviewEnvironmentDB.bak"
-
-            echo "🧠 Restoring SQL database..."
-            sqlcmd -S localhost -U previewenvuser -P "${{ secrets.SQL_PASSWORD }}" -Q "RESTORE DATABASE [PreviewEnvironmentDB] FROM DISK = 'C:\temp\PreviewEnvironmentDB.bak' WITH MOVE 'PreviewEnvironmentDB' TO 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB.mdf', MOVE 'PreviewEnvironmentDB_log' TO 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB_log.ldf', REPLACE"
-
-            echo "✅ DONE."
+            catch {
+              Write-Host "::error::FAILED: $_"
+              exit 1
+            }
+      
 
       - name: Connect to Database and Check AlgoRuns
         run: |
