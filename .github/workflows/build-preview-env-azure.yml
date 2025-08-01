@@ -79,6 +79,19 @@ jobs:
             timeout /t 5 >nul
             goto loop
 
+      - name: Generate strong MSSQL password
+        id: pwgen
+        run: |
+          UPPER=$(tr -dc 'A-Z' </dev/urandom | head -c1)
+          LOWER=$(tr -dc 'a-z' </dev/urandom | head -c1)
+          DIGIT=$(tr -dc '0-9' </dev/urandom | head -c1)
+          SYMBOL=$(echo '@#$%&*!' | fold -w1 | shuf | head -c1)
+          REMAINING=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c8)
+          PASSWORD="${UPPER}${LOWER}${DIGIT}${SYMBOL}${REMAINING}"
+          PASSWORD=$(echo "$PASSWORD" | fold -w1 | shuf | tr -d '\n')
+          echo "Generated password: $PASSWORD"
+          echo "password=$PASSWORD" >> $GITHUB_OUTPUT
+
   build-and-push-to-acr:
     if: ${{ github.event.inputs.mapsunified_pr != '' }}
     runs-on: ubuntu-latest
