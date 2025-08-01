@@ -59,7 +59,7 @@ jobs:
 
       - name: Connect to server
         run: |
-          ssh -i ~/.ssh/id_ed25519 sa@your.remote.ip "echo '🟢 SSH bağlantısı başarılı!'"
+          ssh -i ~/.ssh/id_ed25519 sa@74.234.169.223 "echo '🟢 SSH bağlantısı başarılı!'"
       
 
       - name: Restore .bak on Azure Windows VM via SSH
