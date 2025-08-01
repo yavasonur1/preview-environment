@@ -100,14 +100,15 @@ jobs:
           key: ${{ secrets.AZURE_VM_SSH_KEY }}
           password: ${{ secrets.AZURE_VM_PASS }}
           script: |
-            echo Using password: ${{ steps.pwgen.outputs.password }}
-            echo Creating SQL login...
+            set "PASSWORD=${{ steps.pwgen.outputs.password }}"
+            echo Using password: %PASSWORD%
+            set "ESCAPED_PASSWORD=%PASSWORD:'=''%"
 
-            sqlcmd -S localhost -U previewenvuser -P "${{ secrets.AZURE_SQL_PASS }}" -b -Q "IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'preview_env_user') CREATE LOGIN [preview_env_user] WITH PASSWORD = N'${{ steps.pwgen.outputs.password }}'; ELSE ALTER LOGIN [preview_env_user] WITH PASSWORD = N'${{ steps.pwgen.outputs.password }}';"
+            sqlcmd -S localhost -U previewenvuser -P "${{ secrets.AZURE_SQL_PASS }}" -b -r 1 -Q "IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'preview_env_user') CREATE LOGIN [preview_env_user] WITH PASSWORD = N'%ESCAPED_PASSWORD%'; ELSE ALTER LOGIN [preview_env_user] WITH PASSWORD = N'%ESCAPED_PASSWORD%';"
+            if errorlevel 1 exit 1
 
-            echo Creating database user and assigning role...
-
-            sqlcmd -S localhost -U previewenvuser -P "${{ secrets.AZURE_SQL_PASS }}" -d PreviewEnvironmentDB -b -Q "IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'preview_env_user') CREATE USER [preview_env_user] FOR LOGIN [preview_env_user]; ALTER ROLE db_owner ADD MEMBER [preview_env_user];"
+            sqlcmd -S localhost -U previewenvuser -P "${{ secrets.AZURE_SQL_PASS }}" -d PreviewEnvironmentDB -b -r 1 -Q "IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'preview_env_user') CREATE USER [preview_env_user] FOR LOGIN [preview_env_user]; ALTER ROLE db_owner ADD MEMBER [preview_env_user];"
+            if errorlevel 1 exit 1
 
   build-and-push-to-acr:
     if: ${{ github.event.inputs.mapsunified_pr != '' }}
