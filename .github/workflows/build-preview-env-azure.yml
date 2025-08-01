@@ -75,7 +75,7 @@ jobs:
             azcopy copy "https://acmedevstorageaccount.blob.core.windows.net/acme-dev-container/preview-env-backups/PreviewEnvironmentDB.bak${{ secrets.AZURE_BLOB_SAS }}" "C:\temp\PreviewEnvironmentDB.bak"
 
             echo "🧠 Restoring SQL database..."
-            sqlcmd -S localhost -U sa -P "${{ secrets.SQL_PASSWORD }}" -Q "RESTORE DATABASE [PreviewEnvironmentDB_Restored] FROM DISK = 'C:\temp\PreviewEnvironmentDB.bak' WITH MOVE 'PreviewEnvironmentDB' TO 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB_Restored.mdf', MOVE 'PreviewEnvironmentDB_log' TO 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB_Restored_log.ldf', REPLACE"
+            sqlcmd -S localhost -U previewenvuser -P "${{ secrets.SQL_PASSWORD }}" -Q "RESTORE DATABASE [PreviewEnvironmentDB] FROM DISK = 'C:\temp\PreviewEnvironmentDB.bak' WITH MOVE 'PreviewEnvironmentDB' TO 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB.mdf', MOVE 'PreviewEnvironmentDB_log' TO 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\PreviewEnvironmentDB_log.ldf', REPLACE"
 
             echo "✅ DONE."
 
