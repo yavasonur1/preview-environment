@@ -58,10 +58,26 @@ jobs:
           script: |
             powershell -ExecutionPolicy Bypass -File "C:\Temp\restore.ps1"
 
-      - name: Connect to Database and Check AlgoRuns
-        run: |
-          sqlcmd -S ${{ secrets.AZURE_SQL_HOST }} -U ${{ secrets.AZURE_SQL_USER }} -P ${{ secrets.AZURE_SQL_PASS }} -Q "SELECT @@VERSION"
-
+      - name: Check if DB is online on Azure Windows VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AZURE_VM_IP }}
+          username: ${{ secrets.AZURE_VM_USER }}
+          key: ${{ secrets.AZURE_VM_SSH_KEY }}
+          password: ${{ secrets.AZURE_VM_PASS }}
+          script: |
+            echo Checking if DB is online...
+            :loop
+            for /f "tokens=*" %%i in ('sqlcmd -S localhost -U previewenvuser -P "${{ secrets.AZURE_SQL_PASS }}" -Q "SET NOCOUNT ON; SELECT state_desc FROM sys.databases WHERE name = 'PreviewEnvironmentDB'"') do (
+              echo %%i | findstr /C:"ONLINE" >nul
+              if not errorlevel 1 (
+                echo ✅ DB is ONLINE!
+                goto :eof
+              )
+            )
+            echo Waiting 5s...
+            timeout /t 5 >nul
+            goto loop
 
   build-and-push-to-acr:
     if: ${{ github.event.inputs.mapsunified_pr != '' }}
