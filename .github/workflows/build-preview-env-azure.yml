@@ -48,6 +48,20 @@ jobs:
           sudo ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc-dev
           echo "/opt/mssql-tools/bin" >> $GITHUB_PATH
 
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "AZURE_VM_SSH_KEY" | base64 -d > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H your.remote.ip >> ~/.ssh/known_hosts
+        env:
+          SSH_KEY_BASE64: ${{ secrets.AZURE_VM_SSH_KEY }}
+
+      - name: Connect to server
+        run: |
+          ssh -i ~/.ssh/id_ed25519 sa@your.remote.ip "echo '🟢 SSH bağlantısı başarılı!'"
+      
+
       - name: Restore .bak on Azure Windows VM via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
