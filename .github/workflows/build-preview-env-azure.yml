@@ -92,7 +92,7 @@ jobs:
           echo "Generated password: $PASSWORD"
           echo "password=$PASSWORD" >> $GITHUB_OUTPUT
 
-      - name: Create DB user on Azure Windows VM
+      - name: Replace password and run SQL script on Azure Windows VM
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.AZURE_VM_IP }}
@@ -102,9 +102,10 @@ jobs:
           script: |
             cmd /c ^
               set "PASSWORD=${{ steps.pwgen.outputs.password }}" ^&^
-              echo Using password: %PASSWORD% ^&^
               set "ESCAPED_PASSWORD=%PASSWORD:'=''%'" ^&^
-              sqlcmd -S localhost -U previewenvuser -P "${{ secrets.AZURE_SQL_PASS }}" -d PreviewEnvironmentDB -b -r 1 -Q "IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'preview_env_user') BEGIN CREATE LOGIN [preview_env_user] WITH PASSWORD = N'%ESCAPED_PASSWORD%'; END ELSE BEGIN ALTER LOGIN [preview_env_user] WITH PASSWORD = N'%ESCAPED_PASSWORD%'; END IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'preview_env_user') BEGIN CREATE USER [preview_env_user] FOR LOGIN [preview_env_user]; END ALTER ROLE db_owner ADD MEMBER [preview_env_user];" ^&^
+              echo Replacing password in SQL script... ^&^
+              powershell -Command "(Get-Content C:\Temp\create_user.sql) -replace '\{\{PASSWORD\}\}', '%ESCAPED_PASSWORD%' | Set-Content C:\Temp\create_user_parsed.sql" ^&^
+              sqlcmd -S localhost -U previewenvuser -P "${{ secrets.AZURE_SQL_PASS }}" -i C:\Temp\create_user_parsed.sql ^&^
               if errorlevel 1 exit 1
 
   build-and-push-to-acr:
