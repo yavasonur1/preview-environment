@@ -98,7 +98,7 @@ jobs:
           PASSWORD="${{ steps.pwgen.outputs.password }}"
       
           SECRET_NAME="preview-env-secret"
-          KEYVAULT_NAME="integrationtest/preview/maps-" # bunu değiştir
+          KEYVAULT_NAME="integrationtest-preview-maps"
       
           SECRET_VALUE=$(jq -n \
             --arg username "previewenvuser" \
