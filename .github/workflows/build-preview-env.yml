@@ -86,19 +86,12 @@ jobs:
           key: ${{ secrets.AZURE_VM_SSH_KEY }}
           password: ${{ secrets.AZURE_VM_PASS }}
           script: |
-            @echo off
-            setlocal enabledelayedexpansion
-
-            rem Şifreyi env'den al
-            set "PASSWORD=${{ steps.pwgen.outputs.password }}"
-            echo Using password: %PASSWORD%
-
-            rem Escape işlemi (tek tırnak varsa çift tırnak)
-            set "ESCAPED_PASSWORD=%PASSWORD:'=''%"
-
-            rem SQL komutunu çalıştır
-            sqlcmd -S localhost -U previewenvuser -P "${{ secrets.AZURE_SQL_PASS }}" -d PreviewEnvironmentDB -b -r 1 -Q "IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'preview_env_user') BEGIN CREATE LOGIN [preview_env_user] WITH PASSWORD = N'%ESCAPED_PASSWORD%'; END ELSE BEGIN ALTER LOGIN [preview_env_user] WITH PASSWORD = N'%ESCAPED_PASSWORD%'; END IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'preview_env_user') BEGIN CREATE USER [preview_env_user] FOR LOGIN [preview_env_user]; END ALTER ROLE db_owner ADD MEMBER [preview_env_user];"
-            if errorlevel 1 exit 1
+            cmd /c ^
+              set "PASSWORD=${{ steps.pwgen.outputs.password }}" ^&^
+              echo Using password: %PASSWORD% ^&^
+              set "ESCAPED_PASSWORD=%PASSWORD:'=''%'" ^&^
+              sqlcmd -S localhost -U previewenvuser -P "${{ secrets.AZURE_SQL_PASS }}" -d PreviewEnvironmentDB -b -r 1 -Q "IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'preview_env_user') BEGIN CREATE LOGIN [preview_env_user] WITH PASSWORD = N'%ESCAPED_PASSWORD%'; END ELSE BEGIN ALTER LOGIN [preview_env_user] WITH PASSWORD = N'%ESCAPED_PASSWORD%'; END IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'preview_env_user') BEGIN CREATE USER [preview_env_user] FOR LOGIN [preview_env_user]; END ALTER ROLE db_owner ADD MEMBER [preview_env_user];" ^&^
+              if errorlevel 1 exit 1
 
       - name: Upsert secret
         run: |
