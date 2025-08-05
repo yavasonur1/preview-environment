@@ -157,6 +157,8 @@ jobs:
 
   azure-function-deploy:
     runs-on: ubuntu-latest
+    env:
+      AZURE_FUNCTIONAPP_PACKAGE_PATH: './maps-runner-azure'
 
     steps:
     - name: Checkout code
@@ -170,26 +172,18 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ./maps-runner-azure/MapsRunnerAzure.csproj
 
-    - name: Build
-      run: dotnet build ./maps-runner-azure/MapsRunnerAzure.csproj --configuration Release
-
-    - name: Publish
-      run: dotnet publish ./maps-runner-azure/MapsRunnerAzure.csproj --configuration Release --output ./maps-runner-azure/publish
-
-    - name: Zip the publish folder
+    - name: 'Resolve Project Dependencies Using Dotnet'
+      shell: bash
       run: |
-        cd ./maps-runner-azure/publish
-        zip -r ../publish.zip ./*
-        cd ..
+        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+        dotnet build --configuration Release --output ./output
+        popd
 
-    - name: Azure Login
-      uses: azure/login@v1
+    - name: Run Azure Functions Action
+      uses: Azure/functions-action@v1
+      id: fa
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        app-name: acme-dev-function
+        package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
 
-    - name: Deploy to Azure Function App
-      run: |
-        az functionapp deployment source config-zip \
-        --name acme-dev-function \
-        --resource-group acme-dev-rg \
-        --src ./maps-runner-azure/publish.zip
