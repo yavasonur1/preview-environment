@@ -155,46 +155,31 @@ jobs:
           docker push $ACR_NAME.azurecr.io/$ACR_REPOSITORY:latest
           echo "Docker image pushed to ACR"
 
-  # AWS'deki 'create-and-deploy-lambda' job'ının Azure karşılığı
-  build-and-deploy-azure-function:
+  azure-function-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x' # Azure Functions için .NET 6.0'ı koruyabiliriz
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+    - name: Restore dependencies
+      run: dotnet restore ./maps-runner-azure/MapsRunnerAzure.csproj
 
-      - name: Install Azure Functions Core Tools
-        run: |
-          npm install -g azure-functions-core-tools@4 --unsafe-perm true
+    - name: Build
+      run: dotnet build ./maps-runner-azure/MapsRunnerAzure.csproj --configuration Release
 
-      - name: Build Azure Function Project
-        run: |
-          # maps-runner/template.yml yerine Azure Functions projenizin kök dizinine gidin
-          # dotnet publish komutu, Azure Function'ı yayımlanmaya hazır hale getirir
-          dotnet publish maps-runner/MapsRunner.csproj -c Release -o ./publish
-          # Eğer bir proje dosyanız varsa, örneğin 'maps-runner/MapsRunner.csproj'
-          # veya tüm solution'ı build etmek isterseniz:
-          # dotnet build --configuration Release
+    - name: Publish
+      run: dotnet publish ./maps-runner-azure/MapsRunnerAzure.csproj --configuration Release --output ./maps-runner-azure/publish
 
-      - name: Deploy Azure Function to Azure
-        run: |
-          # Azure Function App'inizi daha önce oluşturmuş olmalısınız.
-          # Bu komut, yayımlanmış dosyaları Azure Function App'inize dağıtır.
-          # Uygulama adını ve kaynak grubunu doğru şekilde ayarlayın.
-          az functionapp publish --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --name your-azure-function-app-name \
-            --src "./publish" --runtime dotnet --os linux
-          echo "Azure Function deployed!"
+    - name: Deploy to Azure Function App
+      uses: Azure/functions-action@v1
+      with:
+        app-name: acme-dev-function
+        package: ./maps-runner-azure/publish
+        publish-profile: ${{ secrets.AZURE_CREDENTIALS }}
+        scm-do-build-during-deployment: false
