@@ -192,4 +192,4 @@ jobs:
         az functionapp deployment source config-zip \
         --name acme-dev-function \
         --resource-group acme-dev-rg \
-        --src publish.zip
+        --src ./maps-runner-azure/publish.zip
