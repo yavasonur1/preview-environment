@@ -178,7 +178,7 @@ jobs:
 
     - name: Zip the publish folder
       run: |
-        cd publish
+        cd ./maps-runner-azure/publish
         zip -r ../publish.zip ./*
         cd ..
 
