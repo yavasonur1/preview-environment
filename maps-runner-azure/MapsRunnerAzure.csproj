@@ -6,6 +6,7 @@
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UsingMicrosoftAzureFunctionsWorkerSdk>true</UsingMicrosoftAzureFunctionsWorkerSdk>
   </PropertyGroup>
 
   <ItemGroup>
