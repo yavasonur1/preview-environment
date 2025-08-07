@@ -80,14 +80,11 @@ namespace AzureFunctionApp
 
                     var payload = new
                     {
-                        properties = new
+                        configuration = new
                         {
-                            configuration = new
+                            container = new
                             {
-                                container = new
-                                {
-                                    args = new[] { "dotnet", "Maps.Runner.dll", "--run-id", runId.ToString(), "--customer-name", "integrationtest", "--environment-type", "preview" }
-                                }
+                                args = new[] { "dotnet", "Maps.Runner.dll", "--run-id", runId.ToString(), "--customer-name", "integrationtest", "--environment-type", "preview" }
                             }
                         }
                     };
