@@ -66,7 +66,7 @@ namespace AzureFunctionApp
                     string subscriptionId = "90b891f0-79da-4298-9f6a-a955ef06c8f8";
                     string resourceGroup = "acme-dev-rg";
                     string jobName = "preview-env-container-job";
-                    string apiVersion = "2023-08-07";
+                    string apiVersion = "2025-01-01";
 
                     _logger.LogInformation($"SubscriptionId: {subscriptionId}");
                     _logger.LogInformation($"ResourceGroup: {resourceGroup}");
