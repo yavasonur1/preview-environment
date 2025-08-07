@@ -31,12 +31,10 @@ namespace AzureFunctionApp
 
             try
             {
-                // Burada keyvault kodunu comment olarak bırakmışsın,
-                // dbServer, dbName, dbUser, dbPassword değerlerini burada tanımlamalısın.
-                string dbServer = "74.234.169.223";
-                string dbName = "PreviewEnvironmentDB";
-                string dbUser = "previewenvuser";
-                string dbPassword = "Onur123456789";
+                string dbServer = "REDACTED";
+                string dbName = "REDACTED";
+                string dbUser = "REDACTED";
+                string dbPassword = "REDACTED";
 
                 string connectionString = $"Server=tcp:{dbServer},1433;Initial Catalog={dbName};Persist Security Info=False;User ID={dbUser};Password={dbPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;";
 
@@ -69,6 +67,10 @@ namespace AzureFunctionApp
                     string resourceGroup = Environment.GetEnvironmentVariable("ResourceGroupName");
                     string jobName = Environment.GetEnvironmentVariable("ContainerJobName");
                     string apiVersion = "2023-08-07";
+
+                    _logger.LogInformation($"SubscriptionId: {subscriptionId}");
+                    _logger.LogInformation($"ResourceGroup: {resourceGroup}");
+                    _logger.LogInformation($"JobName: {jobName}");
 
                     string jobUrl = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.App/jobs/{jobName}/start?api-version={apiVersion}";
 
