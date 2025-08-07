@@ -31,10 +31,10 @@ namespace AzureFunctionApp
 
             try
             {
-                string dbServer = "REDACTED";
-                string dbName = "REDACTED";
-                string dbUser = "REDACTED";
-                string dbPassword = "REDACTED";
+                string dbServer = "74.234.169.223";
+                string dbName = "PreviewEnvironmentDB";
+                string dbUser = "previewenvuser";
+                string dbPassword = "Onur123456789";
 
                 string connectionString = $"Server=tcp:{dbServer},1433;Initial Catalog={dbName};Persist Security Info=False;User ID={dbUser};Password={dbPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;";
 
