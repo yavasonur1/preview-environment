@@ -33,7 +33,7 @@ namespace AzureFunctionApp
             {
                 // Burada keyvault kodunu comment olarak bırakmışsın,
                 // dbServer, dbName, dbUser, dbPassword değerlerini burada tanımlamalısın.
-                string dbServer = "74.234.169.223,1433";
+                string dbServer = "74.234.169.223";
                 string dbName = "PreviewEnvironmentDB";
                 string dbUser = "previewenvuser";
                 string dbPassword = "Onur123456789";
