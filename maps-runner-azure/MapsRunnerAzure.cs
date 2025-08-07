@@ -78,23 +78,11 @@ namespace AzureFunctionApp
                     var tokenRequestContext = new TokenRequestContext(new[] { "https://management.azure.com/.default" });
                     var accessToken = await _credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
 
-                    var payload = new
-                    {
-                        configuration = new
-                        {
-                            container = new
-                            {
-                                args = new[] { "dotnet", "Maps.Runner.dll", "--run-id", runId.ToString(), "--customer-name", "integrationtest", "--environment-type", "preview" }
-                            }
-                        }
-                    };
-
-                    var json = JsonSerializer.Serialize(payload);
                     var request = new HttpRequestMessage(HttpMethod.Post, jobUrl);
                     request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken.Token);
-                    request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
                     var response = await _httpClient.SendAsync(request);
+
 
                     if (response.IsSuccessStatusCode)
                     {
