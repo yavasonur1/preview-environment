@@ -21,7 +21,7 @@ namespace AzureFunctionApp
         {
             _logger = loggerFactory.CreateLogger<MapsRunnerAzure>();
             _httpClient = new HttpClient();
-            _credential = new ManagedIdentityCredential("18773a27-4f4d-45ec-b6fc-a7563069b06a");
+            _credential = new ManagedIdentityCredential();
         }
 
         [Function("MapsRunnerAzure")]
