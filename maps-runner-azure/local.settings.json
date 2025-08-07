@@ -2,6 +2,10 @@
   "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated"
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "SqlConnection": "Server=tcp:<your-db>.database.windows.net,1433;Initial Catalog=your-db;User ID=your-user;Password=your-password;Encrypt=True;",
+    "AzureSubscriptionId": "90b891f0-79da-4298-9f6a-a955ef06c8f8",
+    "ResourceGroupName": "acme-dev-rg",
+    "ContainerJobName": "preview-env-container-job"
   }
 }
