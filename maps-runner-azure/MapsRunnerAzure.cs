@@ -38,7 +38,7 @@ namespace AzureFunctionApp
                 string dbUser = "previewenvuser";
                 string dbPassword = "Onur123456789";
 
-                string connectionString = $"Server=tcp:{dbServer},1433;Initial Catalog={dbName};Persist Security Info=False;User ID={dbUser};Password={dbPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+                string connectionString = $"Server=tcp:{dbServer},1433;Initial Catalog={dbName};Persist Security Info=False;User ID={dbUser};Password={dbPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;";
 
                 int runId;
 
