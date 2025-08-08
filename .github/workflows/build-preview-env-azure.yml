@@ -115,6 +115,21 @@ jobs:
             --vault-name "$KEYVAULT_NAME" \
             --name "$SECRET_NAME" \
             --value "$SECRET_VALUE"
+          
+          SECRET_NAME="solver-api-token-prod"
+          KEYVAULT_NAME="invent-dev-vault"
+          
+          SECRET_VALUE=$(jq -n \
+            --arg Token "xqXYKnq45Mi-zlBAEFcHtkbvQQjqaruQzj0c-ENEF3TyRCSVBP3IgEr50APRboZKBhGvrix2WOsX2iFBoyX6Vm_vVULAOtAc-EePvnT6It95hQXIRnwHb5DmuXIQEEbo9dkNm1FOPZNzD2hDfylbny8JstrT4oir_SQLPE6Kp_I" \
+            '{Token: $Token}'
+          )
+          
+          echo "Upserting secret to Azure Key Vault for Solver Api Token..."
+          
+          az keyvault secret set \
+            --vault-name "$KEYVAULT_NAME" \
+            --name "$SECRET_NAME" \
+            --value "$SECRET_VALUE"
 
 
   build-and-push-to-acr:
