@@ -97,7 +97,7 @@ jobs:
           echo "Using password: ${{ steps.pwgen.outputs.password }}"
           PASSWORD="${{ steps.pwgen.outputs.password }}"
       
-          SECRET_NAME="preview-env-secret"
+          SECRET_NAME="integrationtest-preview-maps"
           KEYVAULT_NAME="invent-dev-vault"
       
           SECRET_VALUE=$(jq -n \
