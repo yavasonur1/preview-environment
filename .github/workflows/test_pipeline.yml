@@ -1,0 +1,19 @@
+name: Manual API Trigger
+
+on:
+  # The workflow must explicitly listen for this event type
+  repository_dispatch:
+    types: [my_custom_event] # This is the custom type you'll use in the API call
+
+jobs:
+  run-api-triggered-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show Payload Data
+        # Access the client payload data sent in the API request
+        run: |
+          echo "Workflow triggered by ${{ github.event.client_payload.user }}"
+          echo "Payload Data: ${{ github.event.client_payload.message }}"
+          
+      - name: Checkout Code
+        uses: actions/checkout@v4
